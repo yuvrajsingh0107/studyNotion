@@ -390,17 +390,24 @@ exports.getEnrolledCourseData = async (req, res, next) => {
       return next(new ErrorResponse('No such course found', 404));
     }
 
-    if (!course.studentsEnrolled.includes(userId)) {
+    const isEnrolled = course.studentsEnrolled.some((id) => id.toString() === userId.toString());
+    if (!isEnrolled) {
       return next(new ErrorResponse('Student is not enrolled in Course', 401));
     }
 
-    const courseProgress = await CourseProgress.findOne({
+    let courseProgress = await CourseProgress.findOne({
       courseId,
       userId,
     });
 
     if (!courseProgress) {
-      return next(new ErrorResponse('No such course progress found', 404));
+      courseProgress = await CourseProgress.create({
+        courseId,
+        userId,
+      });
+      await User.findByIdAndUpdate(userId, {
+        $addToSet: { courseProgress: courseProgress._id, courses: courseId },
+      });
     }
 
     let totalNoOfVideos = 0;

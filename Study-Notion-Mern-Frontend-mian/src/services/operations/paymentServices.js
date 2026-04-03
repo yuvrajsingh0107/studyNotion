@@ -1,7 +1,6 @@
 import { toast } from 'react-hot-toast';
 import { apiConnector } from '../apiConnector';
 import { paymentApi } from '../apis';
-import rzp_logo from '../../assets/Logo/rzp_logo.png';
 import { setPaymentLoading } from '../../redux/slices/profileSlice';
 import { resetCart } from '../../redux/slices/cartSlice';
 
@@ -22,71 +21,25 @@ export const loadScript = (script) => {
 };
 
 export const buyCourses = async (courses, user, token, cartResetTrue, dispatch, navigate) => {
-  const toastId = toast.loading('Loading ...');
+  const toastId = toast.loading('Processing purchase...');
+  dispatch(setPaymentLoading(true));
   try {
-    // Step 1 - Load Razorpay SDK script
-    // const res = await loadScript('https://checkout.razorpay.com/v1/checkout.js');
+    const response = await apiConnector(
+      'POST',
+      paymentApi.POST_MOCK_PURCHASE_API,
+      { courses },
+      { Authorization: `Bearer ${token}` }
+    );
 
-    // if (!res) {
-    //   toast.error('⚠️ Failed to load Razorpay. Check your Internet Connect ');
-    //   return;
-    // }
-
-    // Step 2 - Create / Initiate the order in Backend
-    const orderResponse = await apiConnector('POST', paymentApi.POST_CREATE_ORDER_API, { courses }, { Authorization: `Bearer ${token}` });
-
-    if (!orderResponse) {
-      toast.error('Order generation failed');
-      toast.dismiss(toastId);
-      return;
+    if (response?.data?.success) {
+      toast.success('Purchase successful. You are enrolled.');
+      if (cartResetTrue) dispatch(resetCart());
+      navigate('/dashboard/enrolled-courses');
     }
-    
-    // Step 3 - Razorpay checkout code to Website
-    // Open the Razorpay payment modal, with customized options
-    const options = {
-      key: process.env.REACT_APP_RAZORPAY_PAY_KEY_ID,
-      amount: orderResponse.data.data.amount,
-      currency: orderResponse.data.data.currency,
-      name: 'StudyNotion',
-      description: 'Thank you for Purchasing the Course',
-      image: rzp_logo,
-      order_id: orderResponse.data.data.id,
-      prefill: {
-        name: `${user.firstName} ${user.lastName}`,
-        email: user.email,
-        contact: user.profile?.contactNumber,
-      },
-      handler: async function (response) {
-        // Step 4 - Send payment receive successfully email to payer
-        // can save to data to backend
-        await sendPaymentSuccess(
-          {
-            orderId: response.razorpay_order_id,
-            paymentId: response.razorpay_payment_id,
-            amount: orderResponse.data.data.amount,
-          },
-          token
-        );
-
-        // Verify payment signature and enroll in courses
-        await verifyPaymentSignature(response, courses, token, cartResetTrue, dispatch, navigate);
-      },
-      notes: { ...orderResponse.data.data.notes },
-      readOnly: {
-        name: true,
-        email: true,
-      },
-    };
-
-    // Open the payment modal
-    const razorpayObj = new window.Razorpay(options);
-    razorpayObj.open();
-    razorpayObj.on('payment.failed', function (response) {
-      toast.error('⚠️ Oops ! Payment Failed');
-    });
   } catch (error) {
-    toast.error(error?.response?.data?.error || 'Could not make payment ! Try again');
+    toast.error(error?.response?.data?.error || 'Could not complete purchase. Try again.');
   }
+  dispatch(setPaymentLoading(false));
   toast.dismiss(toastId);
 };
 

@@ -1,12 +1,18 @@
 import React from 'react'
 import { BsFillCaretRightFill } from "react-icons/bs"
 import { FaShareSquare } from "react-icons/fa"
-import { useSelector } from 'react-redux' 
+import { useSelector } from 'react-redux'
 import { ROLE_TYPE } from '../../../utils/constants'
 
+const isUserEnrolledInCourse = (userId, studentsEnrolled) =>
+  Boolean(
+    userId &&
+      studentsEnrolled?.some((id) => id?.toString?.() === userId?.toString?.())
+  )
 
 const CourseBuyNowCard = ({ courseData, handleBuyNowClick, handleAddToCart, handleShare, setConfirmationModalData }) => {
   const { user } = useSelector(state => state.profile);
+  const enrolled = isUserEnrolledInCourse(user?._id, courseData?.studentsEnrolled)
 
 
   return (
@@ -27,7 +33,7 @@ const CourseBuyNowCard = ({ courseData, handleBuyNowClick, handleAddToCart, hand
             className='bg-yellow-50 py-2 px-5 rounded-md font-semibold text-richblack-900'
           >
             {
-              user && courseData.studentsEnrolled.includes(user._id) ?
+              user && enrolled ?
                 "Go To Course" :
                 "Buy Now"
             }
@@ -35,7 +41,9 @@ const CourseBuyNowCard = ({ courseData, handleBuyNowClick, handleAddToCart, hand
 
           {
             (!user ||
-              (user.role === ROLE_TYPE.STUDENT && !courseData.studentsEnrolled.includes(user._id))
+
+
+              (user.role === ROLE_TYPE.STUDENT && !enrolled)
             )
             &&
             (

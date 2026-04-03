@@ -44,6 +44,7 @@ export const otherApi = {
 
 // PAYMENT API
 export const paymentApi = {
+  POST_MOCK_PURCHASE_API: BASE_URL + '/payments/mockpurchase',
   POST_CREATE_ORDER_API: BASE_URL + '/payments/createorder',
   POST_VERIFY_PAYMENT_SIGNATURE_API: BASE_URL + '/payments/verifypaymentsignature',
   POST_SEND_PAYMENT_SUCCESS_EMAIL_API: BASE_URL + '/payments/sendpaymentsuccessemail',

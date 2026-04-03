@@ -104,11 +104,11 @@ const CourseDetails = () => {
     }
 
     // User is already bought that course
-    if (user && courseData.studentsEnrolled.includes(user._id)) {
-      // navigate('/dashboard/enrolled-courses')
-      navigate(`/view-course/${courseData._id}/section/${courseData.sections[0]._id}/sub-section/${courseData.sections[0].subSections[0]._id}`)
-      return
-    }
+    // if (user && courseData.studentsEnrolled.includes(user._id)) {
+    //   // navigate('/dashboard/enrolled-courses')
+    //   // navigate(`/view-course/${courseData._id}/section/${courseData.sections[0]._id}/sub-section/${courseData.sections[0].subSections[0]._id}`)
+    //   return
+    // }
 
     if (user) {
       await buyCourses([courseId], user, token, false, dispatch, navigate);

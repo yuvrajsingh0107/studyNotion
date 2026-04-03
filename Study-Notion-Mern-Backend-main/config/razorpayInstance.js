@@ -9,3 +9,6 @@
 // });
 
 // module.exports = razorpayInstance;
+
+/** No Razorpay SDK until keys are configured; payment flow uses mock enrollment instead. */
+module.exports = null;

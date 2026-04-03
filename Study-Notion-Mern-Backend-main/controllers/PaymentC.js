@@ -14,6 +14,94 @@ const CourseProgress = require('../models/CourseProgress');
 const paymentSuccessEmailTemplate = require('../mail/templates/paymentSuccessEmailTemplate');
 const crypto = require('crypto');
 
+// Set USE_MOCK_PAYMENT=false in production when you switch to real Razorpay.
+const mockPurchaseAllowed = () => process.env.USE_MOCK_PAYMENT !== 'false';
+
+// @desc      Dev / no-Razorpay: enroll student immediately (stores same data as real payment)
+// @route     POST /api/v1/payments/mockpurchase
+// @access    Private/Student
+exports.mockPurchase = async (req, res, next) => {
+  try {
+    if (!mockPurchaseAllowed()) {
+      return next(new ErrorResponse('Mock purchase is disabled', 403));
+    }
+
+    const { courses } = req.body;
+    const userId = req.user.id;
+
+    if (!courses || !Array.isArray(courses) || courses.length === 0) {
+      return next(new ErrorResponse('No courses found', 404));
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return next(new ErrorResponse('No such user found', 404));
+    }
+
+    for (const courseId of courses) {
+      const course = await Course.findOne({
+        _id: courseId,
+        status: 'Published',
+      });
+
+      if (!course) {
+        return next(new ErrorResponse('No such course found', 404));
+      }
+
+      if (course.studentsEnrolled.some((id) => id.toString() === userId.toString())) {
+        continue;
+      }
+
+      const updatedCourse = await Course.findOneAndUpdate(
+        { _id: courseId, status: 'Published' },
+        { $push: { studentsEnrolled: user._id }, $inc: { numberOfEnrolledStudents: 1 } },
+        { new: true }
+      );
+
+      if (!updatedCourse) {
+        return next(new ErrorResponse('Course not found', 404));
+      }
+
+      const courseProgress = await CourseProgress.create({
+        courseId,
+        userId,
+      });
+
+      const student = await User.findByIdAndUpdate(
+        userId,
+        {
+          $push: {
+            courses: course._id,
+            courseProgress: courseProgress._id,
+          },
+        },
+        { new: true }
+      );
+
+      if (!student) {
+        return next(new ErrorResponse('Student not found', 500));
+      }
+
+      try {
+        await emailSender(
+          user.email,
+          `Successfully enroll into ${course.title}`,
+          courseEnrollmentEmailTemplate(course.title, `${user.firstName} ${user.lastName}`)
+        );
+      } catch (e) {
+        // optional
+      }
+    }
+
+    return res.status(200).json({
+      success: true,
+      data: 'Enrolled successfully (mock purchase).',
+    });
+  } catch (err) {
+    next(new ErrorResponse('Failed to complete purchase', 500));
+  }
+};
+
 // @desc      Create an Razorpay order and capture payment automatically
 // @route     POST /api/v1/payments/createorder
 // @access    Private/Student
@@ -105,7 +193,7 @@ exports.verifyPaymentSignature = async (req, res, next) => {
 
     // // Fulfill the action - Enroll in courses
     // await enrollStudent(courses, userId, res, next);
-
+    console.log("hear")
     return res.status(200).json({
       success: true,
       data: 'Payment Verified and Student enrolled in Courses',
