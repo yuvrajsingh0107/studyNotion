@@ -3,13 +3,22 @@ const clgDev = require('./clgDev');
 
 const emailSender = async (toEmail, subject, body) => {
   try {
-    // For real purpose 
+    const host = process.env.MAIL_HOST;
+    const user = process.env.MAIL_USER;
+    const pass = process.env.MAIL_PASS;
+    if (!host || !user || !pass) {
+      const msg =
+        'Missing MAIL_HOST, MAIL_USER, or MAIL_PASS (set them in Render Environment, not only in local config.env)';
+      console.error('[emailSender]', msg);
+      throw new Error(msg);
+    }
+
+    const port = parseInt(process.env.MAIL_PORT || '587', 10);
     const transporter = nodemailer.createTransport({
-      host: process.env.MAIL_HOST,
-      auth: {
-        user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS,
-      },
+      host,
+      port,
+      secure: port === 465,
+      auth: { user, pass },
     });
 
     // // For testing / development purpose
@@ -33,6 +42,7 @@ const emailSender = async (toEmail, subject, body) => {
     return info;
   } catch (err) {
     clgDev(err.message);
+    console.error('[emailSender] SMTP failed:', err.message);
     throw err;
   }
 };
