@@ -2,7 +2,6 @@ import React, { useState } from 'react'
 import { useSelector } from 'react-redux';
 import { useDispatch } from 'react-redux';
 
-import toast from 'react-hot-toast';
 import ConfirmationModal from '../../../../common/ConfirmationModal';
 import { BsListUl, BsFillCameraVideoFill } from "react-icons/bs"
 import { MdEdit } from "react-icons/md"
@@ -18,7 +17,7 @@ const NestedView = ({ handleChangeEditSectionName }) => {
 
   const dispatch = useDispatch();
   const { course } = useSelector(state => state.addCourse);
-  const [loading, setLoading] = useState(false);
+  const [, setLoading] = useState(false);
   const { token } = useSelector(state => state.auth);
   const [confirmationModalData, setConfirmationModalData] = useState(null);
   const [addSubSectionData, setAddSubSectionData] = useState(null);

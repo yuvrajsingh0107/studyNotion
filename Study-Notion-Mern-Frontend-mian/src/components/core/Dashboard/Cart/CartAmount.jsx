@@ -3,7 +3,6 @@ import { useDispatch } from 'react-redux'
 import { useSelector } from 'react-redux'
 import { useNavigate } from 'react-router-dom'
 import IconBtn from '../../../common/IconBtn'
-import { toast } from 'react-hot-toast'
 import { buyCourses } from '../../../../services/operations/paymentServices'
 
 const CartAmount = () => {
@@ -12,7 +11,7 @@ const CartAmount = () => {
   const { user } = useSelector(state => state.profile);
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [loading] = useState(false);
 
   const handleBuyCourse = async () => {
     const courses = cartItems.map(course => course._id);
